@@ -15,14 +15,12 @@ class _JsonToDartScreenState extends State<JsonToDartScreen> {
   final inputJsonTextController = TextEditingController(text: jsonEncode({
     "id": 4,
     "question_id": 1,
-    "question_option": [
-      {
-        "id" : 3,
-        "question_id" : 3,
-        "created_at": "2025-03-24T07:58:18.000000Z",
-        "updated_at": "2025-03-24T07:58:34.000000Z",
-      }
-    ],
+    "question_option": {
+      "id" : 3,
+      "question_id" : 3,
+      "created_at": "2025-03-24T07:58:18.000000Z",
+      "updated_at": "2025-03-24T07:58:34.000000Z",
+    },
     "status": 1,
     "created_at": "2025-03-24T07:58:18.000000Z",
     "updated_at": "2025-03-24T07:58:34.000000Z",
@@ -124,29 +122,11 @@ class _JsonToDartScreenState extends State<JsonToDartScreen> {
       }else if(inputJsonTextController.text.trim().isEmpty){
         ToastUtils.show(msg: "Enter Json");
       }else{
-        final json = (jsonDecode(inputJsonTextController.text.trim())) as Map<String,dynamic>;
-        String str = "class ${classNameTextController.text}{\n";
 
-        for (var e in json.entries) {
-          if(getType(e.value) == "List"){
-            str = "$str  List<${toPascalCase(e.key)}> ${toCamelCase(e.key)} = ${getDefaultValue(e.value)};\n";
-          }else{
-            str = "$str  ${getType(e.value)} ${toCamelCase(e.key)} = ${getDefaultValue(e.value)};\n";
-          }
-        }
-
-        str = "$str\n${classNameTextController.text}.fromJson(dynamic json){\n";
-
-        for (var e in json.entries) {
-          if(getType(e.value) == "List"){
-            str = "$str  ${toCamelCase(e.key)} = ((json[\"${e.key}\"] ?? ${getDefaultValue(e.value)}) as List<dynamic>).map((e) => ${toPascalCase(e.key)}.fromJson(e)).toList();\n";
-          }else{
-            str = "$str  ${toCamelCase(e.key)} = json[\"${e.key}\"] ?? ${getDefaultValue(e.value)};\n";
-          }
-        }
+        final res = _createModel((jsonDecode(inputJsonTextController.text.trim())) as Map<String,dynamic>);
 
         setState(() {
-          outputText = "$str }\n}";
+          outputText = res;
         });
       }
 
@@ -159,6 +139,34 @@ class _JsonToDartScreenState extends State<JsonToDartScreen> {
     }
   }
 
+  String _createModel(Map<String,dynamic> json){
+
+    String str = "class ${classNameTextController.text}{\n";
+
+    for (var e in json.entries) {
+      if(getType(e.value) == "List"){
+        str = "$str  List<${toPascalCase(e.key)}> ${toCamelCase(e.key)} = ${getDefaultValue(e.value)};\n";
+      }else if(getType(e.value) == "Map"){
+        str = "$str  ${toPascalCase(e.key)} ${toCamelCase(e.key)} = ${toPascalCase(e.key)}();\n";
+      }else{
+        str = "$str  ${getType(e.value)} ${toCamelCase(e.key)} = ${getDefaultValue(e.value)};\n";
+      }
+    }
+
+    str = "$str\n${classNameTextController.text}.fromJson(dynamic json){\n";
+
+    for (var e in json.entries) {
+      if(getType(e.value) == "List"){
+        str = "$str  ${toCamelCase(e.key)} = ((json[\"${e.key}\"] ?? ${getDefaultValue(e.value)}) as List<dynamic>).map((e) => ${toPascalCase(e.key)}.fromJson(e)).toList();\n";
+      }else if(getType(e.value) == "Map"){
+        str = "$str  ${toCamelCase(e.key)} = ${toPascalCase(e.key)}.fromJson(json[\"${e.key}\"] ?? {});\n";
+      }else{
+        str = "$str  ${toCamelCase(e.key)} = json[\"${e.key}\"] ?? ${getDefaultValue(e.value)};\n";
+      }
+    }
+
+    return "$str }\n}";
+  }
   void _validateJson(){
     try{
       inputJsonTextController.text = const JsonEncoder.withIndent(' ').convert(jsonDecode(inputJsonTextController.text.trim()));
@@ -179,6 +187,8 @@ class _JsonToDartScreenState extends State<JsonToDartScreen> {
       return "double";
     }else if(v.runtimeType == List){
       return "List";
+    }else if(v is Map){
+      return "Map";
     }else{
       return "String";
     }
