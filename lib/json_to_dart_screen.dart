@@ -211,12 +211,31 @@ class _JsonToDartScreenState extends State<JsonToDartScreen> {
   }
 
   String toCamelCase(String text) {
-    List<String> words = text.split('_');
-    return words.first + words.skip(1).map((word) => word[0].toUpperCase() + word.substring(1)).join('');
+    if(isCamelCase(text)){
+      return text;
+    }else{
+      if(text.startsWith("_")){
+        text = text.substring(1);
+      }
+      if(text.startsWith("__")){
+        text = text.substring(2);
+      }
+      List<String> words = text.split('_');
+      return words.first + words.skip(1).map((word) => word[0].toUpperCase() + word.substring(1)).join('');
+    }
+
   }
 
   String toPascalCase(String text) {
     List<String> words = text.split('_');
     return words.map((word) => word[0].toUpperCase() + word.substring(1)).join('');
   }
+
+  bool isCamelCase(String word) {
+    // Regex pattern to check for camelCase
+    final camelCasePattern = r'^[a-z]+([A-Z][a-z]*)*$';
+    final regExp = RegExp(camelCasePattern);
+    return regExp.hasMatch(word);
+  }
+
 }
