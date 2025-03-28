@@ -185,7 +185,7 @@ class _JsonToDartScreenState extends State<JsonToDartScreen> {
       return "int";
     }else if(v.runtimeType == double){
       return "double";
-    }else if(v.runtimeType == List){
+    }else if(v is List){
       return "List";
     }else if(v is Map){
       return "Map";
